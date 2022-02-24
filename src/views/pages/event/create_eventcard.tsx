@@ -7,6 +7,17 @@ import { createArticle } from '../../../helper/article';
 import config from '../../../helper/config';
 import { createEventCard } from '../../../helper/event';
 
+/* import the ipfs-http-client library */
+import { create } from 'ipfs-http-client';
+
+/* Create an instance of the client */
+// const client = create('https://ipfs.infura.io:5001/api/v0');
+const client = create({
+    host: "ipfs.infura.io",
+    port: 5001,
+    protocol: "https",
+  });
+
 const PageEventCardCreate = () => {
 
     const {userInfo} = useUserContext();
@@ -153,21 +164,27 @@ const PageEventCardCreate = () => {
         setValues({ ...values, [prop]: value });
     };
 
-    const handleCreate = () => {
+    const handleCreate = async () => {
         console.log('handle create');
         
         if (!checkvalidations()) return;
 
+        setLoading(true); 
+
+        //upload image to IPFS
+        const added = await client.add(smallFile)
+        const ipfs_url = `https://ipfs.infura.io/ipfs/${added.path}`
+        console.log(ipfs_url);
+
         const fd = new FormData();
         fd.append('large_image', largeFile);
         fd.append('small_image', smallFile);
+        fd.append('picture_ipfs', ipfs_url);
         fd.append('creator', userInfo.user.id);
         fd.append('green_pass_needed', greenPass as any);
         for (const [key, value] of Object.entries(values)) {
             fd.append(key, value as any);
-        }
-
-        setLoading(true);
+        }              
 
         createEventCard(fd).then(res => {
             setLoading(false);

@@ -1,5 +1,7 @@
-export const myNFTAddress_testnet = "0x503bC60102b11F3D4ce5CCB105cb3cAaf6b7B92C";
+export const myNFTAddress_testnet = "0xd6F1940750F4EE77c152568aAB5A4e6b18164B91";
+export const tokenURL_testnet = "https://testnet.bscscan.com/token/0xd6F1940750F4EE77c152568aAB5A4e6b18164B91?a=";
 export const myNFTAddress_mainnet = "0x3d4A00165B6c5761670f399758d3dd773721F90F";
+export const tokenURL_mainnet = "https://bscscan.com/token/0x3d4A00165B6c5761670f399758d3dd773721F90F?a=";
 export const myNFTABI = [
 	{
 		"inputs": [],

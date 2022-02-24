@@ -5673,3 +5673,12 @@ body::-webkit-scrollbar-thumb {
   border-radius: 5px;
   text-align: center;
 }
+.in_progress {
+  margin-bottom: 15px;
+  width: -webkit-fill-available;
+  padding: 1px 5px;
+  color: white;
+  background: #54774f;
+  border-radius: 5px;
+  text-align: center;
+}

@@ -109,7 +109,7 @@ const userTickets = (data) => {
 const updateUserTickets = (data) => {
   return new Promise((resolve, reject) => {
     api
-      .post("/api/event/eventcard_multi/user_tickets", {id: data.id })
+      .post("/api/event/eventcard_multi/user_tickets", {id: data.id, tokenURL: data.tokenURL, ipfsURL: data.ipfsURL })
       .then((response) => {
         resolve(response.data);
       })

@@ -9,7 +9,7 @@ import { useWeb3React } from "@web3-react/core"
 import { ethers } from 'ethers'
 import { injected } from "../../../../helper/web3service"
 
-import {myNFTAddress_testnet, myNFTAddress_mainnet, myNFTABI} from "../../../../utils/nft_contract";
+import {myNFTAddress_testnet, myNFTAddress_mainnet, myNFTABI, tokenURL_mainnet, tokenURL_testnet} from "../../../../utils/nft_contract";
 
 import { useAppContext } from '../../../../context/AppContext';
 import { useToasts } from "react-toast-notifications";
@@ -54,6 +54,16 @@ const PageAdminActivity = () => {
         }
     }
 
+    const updateTicketProgressStatus = (tickets:any, id:string, in_progress:boolean) => {
+        return tickets.map((ticket: any) => {
+            var temp = Object.assign({}, ticket);
+            if (temp.id === id) {
+                temp.in_progress = in_progress;
+            }
+            return temp;
+        });
+    }
+
     const mintNFT = async (data: any) => {
         if(!active){
             await wallet_connect();
@@ -64,10 +74,12 @@ const PageAdminActivity = () => {
         }else{
             if(account){
                 addToast('Please wait ... It might takes some time', {appearance: 'warning', autoDismiss: true});
-                
+                setTickets(updateTicketProgressStatus(tickets,data.id, true));
+                console.log('1', tickets)
+                //IPFS
                 try {
                     const tokenObject = {
-                        URI: `${config.API_BASE_URL}/api/upload/get_file?path=${data.eventcard.picture_small}`,
+                        ImageIPFS: data.eventcard.picture_ipfs,
                         metaData: {
                           EventName: data.eventcard.name,
                           Description: data.eventcard.description,
@@ -77,8 +89,11 @@ const PageAdminActivity = () => {
                           Collection: data.eventcard.collection
                         },
                       };
+
                     const added = await client.add(JSON.stringify(tokenObject))
                     const ipfs_url = `https://ipfs.infura.io/ipfs/${added.path}`
+
+                    // const ipfs_url = `https://ipfs.infura.io/ipfs/test`; // #placeholder
                     console.log("IPFS ulr:", ipfs_url)                  
 
                     const provider = new ethers.providers.Web3Provider((window as any).ethereum);
@@ -88,10 +103,14 @@ const PageAdminActivity = () => {
                         await contract.mintNFT(account, ipfs_url);
                     }catch(e){
                         console.log(e);
+                        setTickets(updateTicketProgressStatus(tickets,data.id, false));
                     }
                     contract.on('Minted', (tokenId, tokenURI) => {
                         console.log('First parameter :', tokenId);
                         console.log('Second parameter :', tokenURI);
+                        data.tokenURL = `${tokenURL_testnet}${tokenId}`;
+                        data.ipfsURL = data.eventcard.picture_ipfs;
+                        console.log(data);
                         updateUserTickets(data ).then(res => {
                             if (res.success) { 
                                 addToast('Successfully Minted', {appearance: 'success', autoDismiss: true});
@@ -107,6 +126,7 @@ const PageAdminActivity = () => {
                     });  
                 } catch (error) {
                     console.log('Error: ', error)
+                    setTickets(updateTicketProgressStatus(tickets,data.id, false));
                 }              
             }
         }
@@ -146,8 +166,9 @@ const PageAdminActivity = () => {
                     </Link>
                     <div className="activity__content">
                         <div className='nft-mint'>
-                            <h3 className="activity__title"><Link to ="/item">{ticket.eventcard.name}</Link></h3>
-                            {userInfo.user.name == ticket.buyer.name && (!ticket.is_minted ? <button onClick={() => {mintNFT(ticket);}} className="btn mint-btn" >Claim NFT</button> : <label className="minted">Minted</label> )}
+                            <h3 className="activity__title"><Link to ="/item">{ticket.eventcard.name}</Link></h3>                            
+                            {ticket.in_progress && <label className="in_progress">In progress</label>}
+                            {!ticket.in_progress && userInfo.user.name == ticket.buyer.name && (!ticket.is_minted ? <button onClick={() => {mintNFT(ticket);}} className="btn mint-btn" >Claim NFT</button> : <label className="minted">Minted</label> )}
                         </div>
                         <p className="activity__text">Created by <Link to="/author">@{ticket.eventcard.creator.name}</Link>
                             {/* <br/>for <b>{coin}</b> */}
@@ -155,9 +176,14 @@ const PageAdminActivity = () => {
                         <p className="activity__text mb-0">Purchased by <Link to="/author">@{ticket.buyer.name}</Link></p>
                         <span className="activity__time">Purchased <ReactTimeAgo date={ticket.createdAt} locale="en-US"/></span>
                         <br></br>
-                        <span className="activity__time">Click here to see <Link to="/author">IPFS address</Link></span>
-                        <br></br>
-                        <span className="activity__time">Click here to see <Link to="/author">BSC NFT token</Link></span>
+                        {ticket.is_minted?
+                            <>
+                                <span className="activity__time">Click here to see <a target="_blank" href ={ticket.ipfsURL}>IPFS address</a></span>
+                                <br></br>
+                                <span className="activity__time">Click here to see <a target="_blank" href={ticket.tokenURL}>BSC NFT token</a></span>
+                            </>
+                            :
+                            <></>}
                     </div>
                 </div>
         )
